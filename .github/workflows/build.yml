@@ -1,0 +1,41 @@
+
+name: Build Telegram Local Bot API
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git cmake g++ gperf make zlib1g-dev libssl-dev
+
+      - name: Download Telegram source
+        run: |
+          git clone --recursive https://github.com/tdlib/telegram-bot-api.git
+
+      - name: Build Telegram API
+        run: |
+          cd telegram-bot-api
+          mkdir build
+          cd build
+          cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX:PATH=.. ..
+          cmake --build . --target install --parallel 2
+
+      - name: Package executable
+        run: |
+          cd telegram-bot-api
+          tar -czf telegram-api-linux.tar.gz bin
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: telegram-api-linux
+          path: telegram-bot-api/telegram-api-linux.tar.gz
+          retention-days: 7
